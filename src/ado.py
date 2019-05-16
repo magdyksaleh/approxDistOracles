@@ -3,9 +3,7 @@ import numpy as np
 import util
 import collections
 
-
-
-class approximateDistanceOracle(object):
+class ApproximateDistanceOracle(object):
     def __init__(self, G: nx.Graph, k: int):
         """
             G {nx.Graph} -- [description]
@@ -73,7 +71,6 @@ class approximateDistanceOracle(object):
             i += 1
             (u, v) = (v, u)
             w = self.paths[i][u]
-
         return self.distances[i][u] + self.distances[i][v]
 
 
@@ -82,6 +79,6 @@ G = nx.Graph()
 numNodes = 16
 G.add_nodes_from([0, numNodes])
 G.add_weighted_edges_from([(i-1, i, 1.0) for i in range(1, numNodes+1)])
-ado = approximateDistanceOracle(G, 2)
+ado = ApproximateDistanceOracle(G, 2)
 ado.preprocess()
 print(ado.query(1, 2))
