@@ -18,6 +18,7 @@ class ApproximateDistanceOracle(object):
         self.C = {}
         #bunches
         self.B = collections.defaultdict(list)
+        self.B_distances = {}
 
     def preprocess(self):
         """Implementing vanilla ADO
@@ -27,58 +28,68 @@ class ApproximateDistanceOracle(object):
             G {nx.Graph} -- [description]
         """
         #Generate A's 
-        A = [[] for i in range(self.k)]
+        A = [[] for i in range(self.k+1)]
         prob = self.n**(-1/self.k) 
-        print("retention prob: %.2f" % prob)
-        for i in range(self.k):
+        for i in range(self.k+1):
             if i == 0: 
                 A[i] = self.G.nodes()
+            elif i == self.k: continue
             else: 
                 A[i] = [j for j in A[i-1] if np.random.rand() <= prob]
-        
         #for each A_i 
         # add new source node s with weight 0 from 
         # each node in A_i to s. Run shorted path from 
         # s to all v in O(m) to get distances
 
-        for i, A_i in enumerate(reversed(A)):
+        self.distances.append({
+            node: float('inf') for node in self.G.nodes()
+        })
+        
+        self.paths.append({
+            node: node for node in self.G.nodes()
+        })
+
+        prev = A[-1] #start at A_k
+
+        for i, A_i in enumerate(list(reversed(A))):
+            if i == 0: continue
             d, p = util.singleSourceSP(self.G, A_i)
             self.paths.append(p)
             self.distances.append(d)
-            if i == 0: prev = A_i
-            else:
-                # update path args
-                print(p)
-                for node in p: 
-                    if self.distances[i][node] == self.distances[i-1][node]:
-                        self.paths[i][node] = self.paths[i-1][node]
+            for node in p: 
+                if self.distances[i][node] == self.distances[i-1][node]:
+                    self.paths[i][node] = self.paths[i-1][node]
+            
+            #all elements in A_i - A_(i+1)
+            diff_As = [x for x in A_i if x not in prev]
+            for w in diff_As:
+                d, p = nx.single_source_dijkstra(self.G, w)
+                # print(d)
+                # print(self.distances[i-1])
+                # print([(x, d[x]) for x in d if d[x] < self.distances[i-1][x]])
+                # break
+                self.C[w] = [
+                    x for x in d
+                        if d[x] < self.distances[i-1][x]
+                ]
                 
-                #all elements in A_i - A_(i+1)
-                diff_As = [x for x in A_i if x not in prev]
-                for node in diff_As:
-                    d, p = nx.single_source_dijkstra(self.G, node)
-                    self.C[node] = [
-                        x for x in d
-                            if d[x] < self.distances[i-1][x]
-                    ]
-                    for elem in self.C[node]:
-                        self.B[elem].append(node)
+                for v in self.C[w]:
+                    self.B[v].append(w)
+                    self.B_distances[(v, w)] = d[v]
+            prev = A_i
                 
+        self.distances.reverse()
+        self.paths.reverse()
+
     def query(self, u: int, v: int):
         w = u
         i = 0
-        while (w not in self.B[u]):
+        while (w not in self.B[v]):
             i += 1
             (u, v) = (v, u)
             w = self.paths[i][u]
-        return self.distances[i][u] + self.distances[i][v]
+        return self.distances[i][u] + self.B_distances[(v, w)]
 
 
 ######################################################
-G = nx.Graph()
-numNodes = 16
-G.add_nodes_from([0, numNodes])
-G.add_weighted_edges_from([(i-1, i, 1.0) for i in range(1, numNodes+1)])
-ado = ApproximateDistanceOracle(G, 2)
-ado.preprocess()
-print(ado.query(1, 2))
+
