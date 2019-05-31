@@ -1,5 +1,6 @@
 import networkx as nx
 
+@profile
 def singleSourceSP(G: nx.Graph, A_i: list):
     """Return node: (dist, p(node)) for A_i
     

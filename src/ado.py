@@ -20,6 +20,7 @@ class ApproximateDistanceOracle(object):
         self.B = collections.defaultdict(list)
         self.B_distances = {}
 
+    @profile
     def preprocess(self):
         """Implementing vanilla ADO
         
@@ -36,6 +37,7 @@ class ApproximateDistanceOracle(object):
             elif i == self.k: continue
             else: 
                 A[i] = [j for j in A[i-1] if np.random.rand() <= prob]
+                
         #for each A_i 
         # add new source node s with weight 0 from 
         # each node in A_i to s. Run shorted path from 
@@ -92,4 +94,10 @@ class ApproximateDistanceOracle(object):
 
 
 ######################################################
+
+
+
+G = nx.fast_gnp_random_graph(200, 0.3)
+ado_approx_10 = ApproximateDistanceOracle(G, 10)
+ado_approx_10.preprocess()
 
