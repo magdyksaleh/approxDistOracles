@@ -4,13 +4,17 @@ import util
 import collections
 
 class ApproximateDistanceOracle(object):
-    def __init__(self, G: nx.Graph, k: int):
+    def __init__(self, G: nx.Graph, k: int, restricted : bool, S: list):
         """
             G {nx.Graph} -- [description]
             k {int} -- [description]
+            restricted -- restriced oracle or not
+            S -- vertex list if needed
         """
         self.G = G
         self.k = k
+        self.restricted = restricted
+
         self.paths = []
         self.distances = []
         self.n = len(self.G.nodes())
@@ -76,6 +80,8 @@ class ApproximateDistanceOracle(object):
                 ]
                 
                 for v in self.C[w]:
+                    if self.restricted and v not in self.S :
+                        continue
                     self.B[v].append(w)
                     self.B_distances[(v, w)] = d[v]
             prev = A_i
@@ -92,12 +98,30 @@ class ApproximateDistanceOracle(object):
             w = self.paths[i][u]
         return self.distances[i][u] + self.B_distances[(v, w)]
 
+    def distk(self, u: int, v: int, i: int) :
+        w = u
+        while (w not in self.B[v]):
+            i += 1
+            (u, v) = (v, u)
+            w = self.paths[i][u]
+        return self.distances[i][u] + self.B_distances[(v, w)]
+
+
+    def bdistk(self, u: int, v: int, i1: int, i2: int) :
+        if i2 - i1 <= np.log2(self.k) :
+            return distk(u, v, i1)
+
+        # Find middle even index
+        midIndex = (i1 + i2)//2
+        midIndex = midIndex + 1 if midIndex % 2 == 1 else midIndex
+
+        for j in range(i1, midIndex - 2)
+
 
 ######################################################
 
 
-
 G = nx.fast_gnp_random_graph(200, 0.3)
-ado_approx_10 = ApproximateDistanceOracle(G, 10)
+ado_approx_10 = ApproximateDistanceOracle(G, 10, False, []) # Ignore last two arguments
 ado_approx_10.preprocess()
 
