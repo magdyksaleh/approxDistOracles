@@ -5,7 +5,7 @@ import collections
 import tqdm 
 
 class ApproximateDistanceOracle(object):
-    def __init__(self, G: nx.Graph, k: int, restricted : bool, S: list):
+    def __init__(self, G: nx.Graph, k: int, restricted=False, S=[]):
         """
             G {nx.Graph} -- [description]
             k {int} -- [description]
@@ -33,7 +33,10 @@ class ApproximateDistanceOracle(object):
             G {nx.Graph} -- [description]
         """
         #Generate A's 
+        print(self.k)
+
         A = [[] for i in range(self.k+1)]
+
         prob = self.n**(-1/self.k) 
         for i in range(self.k+1):
             if i == 0: 
@@ -115,8 +118,19 @@ class ApproximateDistanceOracle(object):
         midIndex = (i1 + i2)//2
         midIndex = midIndex + 1 if midIndex % 2 == 1 else midIndex
 
-        for j in range(i1, midIndex - 2)
+        bestj = -1
+        closestDist = -float('inf')
+        for j in range(i1, midIndex - 1) : # Won't this not work if i -2 is too small? Nope, because of base case
+            deltaJu = self.distances[j+2][u] - self.distances[j][u]
+            if deltaJu < closestDist :
+                closestDist = deltaJu
+                bestj = j
 
+        if self.paths[bestj][u] not in self.B[v] \
+            and self.paths[bestj + 1][u] not in self.B[u] :
+                return bdistk(u, v, midIndex, i2)
+        else :
+            return bdistk(u, v, midIndex, j)
 
 ######################################################
 
@@ -124,7 +138,7 @@ G = nx.fast_gnp_random_graph(200, 0.3)
 ado_approx_10 = ApproximateDistanceOracle(G, 10, False, []) # Ignore last two arguments
 ado_approx_10.preprocess()
 
-k = np.log(len(G))
+k = int(np.floor(np.log(len(G))))
 
 ado_approx_k = ApproximateDistanceOracle(G, k)
 ado_approx_k.preprocess()
