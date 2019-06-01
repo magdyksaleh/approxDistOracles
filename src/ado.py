@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import util
 import collections
+import tqdm 
 
 class ApproximateDistanceOracle(object):
     def __init__(self, G: nx.Graph, k: int, restricted : bool, S: list):
@@ -24,7 +25,6 @@ class ApproximateDistanceOracle(object):
         self.B = collections.defaultdict(list)
         self.B_distances = {}
 
-    @profile
     def preprocess(self):
         """Implementing vanilla ADO
         
@@ -57,7 +57,7 @@ class ApproximateDistanceOracle(object):
 
         prev = A[-1] #start at A_k
 
-        for i, A_i in enumerate(list(reversed(A))):
+        for i, A_i in tqdm.tqdm(enumerate(list(reversed(A)))):
             if i == 0: continue
             d, p = util.singleSourceSP(self.G, A_i)
             self.paths.append(p)
@@ -120,8 +120,19 @@ class ApproximateDistanceOracle(object):
 
 ######################################################
 
-
 G = nx.fast_gnp_random_graph(200, 0.3)
 ado_approx_10 = ApproximateDistanceOracle(G, 10, False, []) # Ignore last two arguments
 ado_approx_10.preprocess()
 
+k = np.log(len(G))
+
+ado_approx_k = ApproximateDistanceOracle(G, k)
+ado_approx_k.preprocess()
+
+
+
+r_k = []
+for i in tqdm.tqdm(range(30)):
+    u = np.random.randint(0, len(G.nodes())-1)
+    v = np.random.randint(0, len(G.nodes())-1)
+    r_k.append(ado_approx_k.query(u, v))
