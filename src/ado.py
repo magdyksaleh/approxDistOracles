@@ -99,7 +99,7 @@ class ApproximateDistanceOracle(object):
 
 G = nx.fast_gnp_random_graph(500, 0.4)
 
-k = np.log(len(G))
+k = int(np.floor(np.log(len(G))))
 
 ado_approx_k = ApproximateDistanceOracle(G, k)
 ado_approx_k.preprocess()
