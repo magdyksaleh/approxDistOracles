@@ -20,8 +20,10 @@ class ApproximateDistanceOracle(object):
         self.paths = []
         self.distances = []
         self.n = len(self.G.nodes())
+
         #Clusters span of tree from A_i node 
         self.C = {}
+        self.S = S
         #bunches
         self.B = collections.defaultdict(list)
         self.B_distances = {}
@@ -59,7 +61,7 @@ class ApproximateDistanceOracle(object):
             node: node for node in self.G.nodes()
         })
 
-        prev = A[-1] #start at A_k
+        prev = A[-1] #start at A_kc
 
         for i, A_i in tqdm.tqdm(enumerate(list(reversed(A)))):
             if i == 0: continue
@@ -71,17 +73,19 @@ class ApproximateDistanceOracle(object):
                     print("i: ", i, " - node: ", node)
                     import pdb; pdb.set_trace()
 
+                if node not in self.distances[i-1]:
+                    print("i-1: ", i-1, " - node: ", node)
+                    import pdb; pdb.set_trace()
+
                 if self.distances[i][node] == self.distances[i-1][node]:
                     self.paths[i][node] = self.paths[i-1][node]
 
             #all elements in A_i - A_(i+1)
             diff_As = [x for x in A_i if x not in prev]
             for w in diff_As:
-                d, p = nx.single_source_dijkstra(self.G, w)
-                # print(d)
-                # print(self.distances[i-1])
-                # print([(x, d[x]) for x in d if d[x] < self.distances[i-1][x]])
-                # break
+                # d, p = nx.single_source_dijkstra(self.G, w)
+                d, p = util.modifiedDijkstra(self.G, w,self.distances[i-1])
+                
                 self.C[w] = [
                     x for x in d
                         if d[x] < self.distances[i-1][x]
@@ -99,7 +103,7 @@ class ApproximateDistanceOracle(object):
 
     def query(self, u: int, v: int, fasterQuery=False):
         if self.fasterQuery :
-            return self.bdistk(u, v, 0, k)
+            return self.bdistk(u, v, 0, self.k+1)
         w = u
         i = 0
         while (w not in self.B[v]):
@@ -109,6 +113,7 @@ class ApproximateDistanceOracle(object):
         return self.distances[i][u] + self.B_distances[(v, w)]
 
     def distk(self, u: int, v: int, i: int) :
+        
         w = u
         while (w not in self.B[v]):
             i += 1
@@ -141,13 +146,13 @@ class ApproximateDistanceOracle(object):
 
 ######################################################
 
-G = nx.fast_gnp_random_graph(200, 0.3)
-ado_approx_10 = ApproximateDistanceOracle(G, 10, False, []) # Ignore last two arguments
-ado_approx_10.preprocess()
+# ado_approx_10 = ApproximateDistanceOracle(G, 10, False, []) # Ignore last two arguments
+# ado_approx_10.preprocess()
 
+G = nx.fast_gnp_random_graph(1000, 0.3)
 k = int(np.floor(np.log(len(G))))
 
-ado_approx_k = ApproximateDistanceOracle(G, k, fasterQuery=True)
+ado_approx_k = ApproximateDistanceOracle(G, 17, fasterQuery=True)
 ado_approx_k.preprocess()
 
 
