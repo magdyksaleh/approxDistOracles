@@ -5,7 +5,7 @@ import collections
 import tqdm 
 
 class ApproximateDistanceOracle(object):
-    def __init__(self, G: nx.Graph, k: int, restricted=False, S=[]):
+    def __init__(self, G: nx.Graph, k: int, restricted=False, S=[], fasterQuery=False):
         """
             G {nx.Graph} -- [description]
             k {int} -- [description]
@@ -15,6 +15,7 @@ class ApproximateDistanceOracle(object):
         self.G = G
         self.k = k
         self.restricted = restricted
+        self.fasterQuery=fasterQuery
 
         self.paths = []
         self.distances = []
@@ -96,7 +97,9 @@ class ApproximateDistanceOracle(object):
         self.distances.reverse()
         self.paths.reverse()
 
-    def query(self, u: int, v: int):
+    def query(self, u: int, v: int, fasterQuery=False):
+        if self.fasterQuery :
+            return self.bdistk(u, v, 0, k)
         w = u
         i = 0
         while (w not in self.B[v]):
@@ -116,7 +119,7 @@ class ApproximateDistanceOracle(object):
 
     def bdistk(self, u: int, v: int, i1: int, i2: int) :
         if i2 - i1 <= np.log2(self.k) :
-            return distk(u, v, i1)
+            return self.distk(u, v, i1)
 
         # Find middle even index
         midIndex = (i1 + i2)//2
@@ -132,9 +135,9 @@ class ApproximateDistanceOracle(object):
 
         if self.paths[bestj][u] not in self.B[v] \
             and self.paths[bestj + 1][u] not in self.B[u] :
-                return bdistk(u, v, midIndex, i2)
+                return self.bdistk(u, v, midIndex, i2)
         else :
-            return bdistk(u, v, midIndex, j)
+            return self.bdistk(u, v, midIndex, j)
 
 ######################################################
 
@@ -144,7 +147,7 @@ ado_approx_10.preprocess()
 
 k = int(np.floor(np.log(len(G))))
 
-ado_approx_k = ApproximateDistanceOracle(G, k)
+ado_approx_k = ApproximateDistanceOracle(G, k, fasterQuery=True)
 ado_approx_k.preprocess()
 
 
