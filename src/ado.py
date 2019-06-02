@@ -66,9 +66,13 @@ class ApproximateDistanceOracle(object):
             self.paths.append(p)
             self.distances.append(d)
             for node in p: 
+                if node not in self.distances[i]:
+                    print("i: ", i, " - node: ", node)
+                    import pdb; pdb.set_trace()
+
                 if self.distances[i][node] == self.distances[i-1][node]:
                     self.paths[i][node] = self.paths[i-1][node]
-            
+
             #all elements in A_i - A_(i+1)
             diff_As = [x for x in A_i if x not in prev]
             for w in diff_As:
